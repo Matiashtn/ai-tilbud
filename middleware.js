@@ -1,23 +1,25 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 
-export function middleware(request) {
-  const basicAuth = request.headers.get('authorization')
+export function middleware(req) {
+  const basicAuth = req.headers.get('authorization');
 
   if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1]
-    const [user, pwd] = atob(authValue).split(':')
+    const authValue = basicAuth.split(' ')[1];
+    const [user, pass] = atob(authValue).split(':');
 
-    if (user === 'admin' && pwd === 'kode123') {
-      return NextResponse.next()
+    if (user === 'admin' && pass === 'kode123') {
+      return NextResponse.next();
     }
   }
 
-  const response = new NextResponse()
-  response.headers.set('WWW-Authenticate', 'Basic realm="Adgang til ai-tilbud.dk"')
-  response.status = 401
-  return response
+  return new NextResponse('Auth required', {
+    status: 401,
+    headers: {
+      'WWW-Authenticate': 'Basic realm="Secure Area"',
+    },
+  });
 }
 
 export const config = {
-  matcher: ['/', '/(.*)'], // beskyt hele sitet
-}
+  matcher: ['/', '/(.*)'],
+};
