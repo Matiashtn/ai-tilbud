@@ -1,37 +1,23 @@
-// middleware.js
 import { NextResponse } from 'next/server'
 
 export function middleware(request) {
   const basicAuth = request.headers.get('authorization')
 
-  const USER = 'admin'
-  const PASS = 'kode123'
-
   if (basicAuth) {
-    const [scheme, encoded] = basicAuth.split(' ')
+    const authValue = basicAuth.split(' ')[1]
+    const [user, pwd] = atob(authValue).split(':')
 
-    if (scheme === 'Basic') {
-      const buff = Buffer.from(encoded, 'base64')
-      const [user, pass] = buff.toString().split(':')
-
-      if (user === USER && pass === PASS) {
-        return NextResponse.next()
-      }
+    if (user === 'admin' && pwd === 'kode123') {
+      return NextResponse.next()
     }
   }
 
-  return new Response('Adgangskode påkrævet', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="Beskyttet område"',
-    },
-  })
+  const response = new NextResponse()
+  response.headers.set('WWW-Authenticate', 'Basic realm="Adgang til ai-tilbud.dk"')
+  response.status = 401
+  return response
 }
 
-// Denne konfiguration bestemmer hvilke sider der beskyttes
 export const config = {
-  matcher: ['/', '/(.*)'], // Beskytter hele appen
-}
-
-  })
+  matcher: ['/', '/(.*)'], // beskyt hele sitet
 }
