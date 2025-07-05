@@ -1,57 +1,77 @@
-
-import { useState } from "react";
+import { useState } from 'react';
 
 export default function Home() {
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
+  const [form, setForm] = useState({
+    firmanavn: '',
+    kunde: '',
+    opgavebeskrivelse: '',
+    pris: '',
+    deadline: '',
+    kontaktnavn: '',
+    kontaktemail: '',
+    skrivestil: 'professionel',
+    tone: '',
+  });
+
+  const [resultat, setResultat] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleGenerate = async () => {
-    if (!input.trim()) return;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
-    setOutput("");
+    setResultat('');
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
-      });
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
 
-      const data = await res.json();
-      setOutput(data.result);
-    } catch (err) {
-      console.error(err);
-      setOutput("Der opstod en fejl. Prøv igen.");
-    } finally {
-      setLoading(false);
-    }
+    const data = await res.json();
+    setResultat(data.prompt || 'Ingen svar modtaget');
+    setLoading(false);
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">AI Tilbudsgenerator</h1>
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
+      <h1>AI Tilbudsgenerator</h1>
+      <form onSubmit={handleSubmit}>
+        <input name="firmanavn" placeholder="Firmanavn" onChange={handleChange} required />
+        <input name="kunde" placeholder="Kunde" onChange={handleChange} required />
+        <textarea name="opgavebeskrivelse" placeholder="Beskrivelse af opgaven" onChange={handleChange} required />
+        <input name="pris" placeholder="Pris (kr)" onChange={handleChange} required />
+        <input name="deadline" placeholder="Deadline" onChange={handleChange} required />
+        <input name="kontaktnavn" placeholder="Dit navn" onChange={handleChange} required />
+        <input name="kontaktemail" placeholder="Din e-mail" onChange={handleChange} required />
 
-      <textarea
-        className="w-full max-w-xl h-32 border rounded p-3 mb-4"
-        placeholder="Skriv en beskrivelse af kundens opgave..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
+        <label>Vælg skrivestil:</label>
+        <select name="skrivestil" onChange={handleChange}>
+          <option value="professionel">Professionel</option>
+          <option value="jordnær">Nede på jorden</option>
+          <option value="kortfattet">Kortfattet</option>
+          <option value="brugerdefineret">Brugerdefineret</option>
+        </select>
 
-      <button
-        onClick={handleGenerate}
-        disabled={loading}
-        className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? "Genererer..." : "Generer tilbudstekst"}
-      </button>
+        {form.skrivestil === 'brugerdefineret' && (
+          <textarea name="tone" placeholder="Beskriv din ønskede skrivestil..." onChange={handleChange} />
+        )}
 
-      {output && (
-        <div className="mt-6 w-full max-w-xl p-4 border rounded bg-gray-50 whitespace-pre-wrap">
-          {output}
+        <button type="submit" disabled={loading}>
+          {loading ? 'Genererer tilbud...' : 'Generér tilbud'}
+        </button>
+      </form>
+
+      {resultat && (
+        <div style={{ whiteSpace: 'pre-wrap', marginTop: 20 }}>
+          <h2>Genereret tilbud:</h2>
+          <p>{resultat}</p>
         </div>
       )}
-    </main>
+    </div>
   );
 }
